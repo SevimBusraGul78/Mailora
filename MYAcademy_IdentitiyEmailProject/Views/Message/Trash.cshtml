@@ -1,0 +1,119 @@
+﻿@model List<MYAcademy_IdentitiyEmailProject.Entities.Message>
+@using System.Globalization
+@{
+    ViewData["Title"] = "Çöp Kutusu";
+    ViewData["ActiveMenu"] = "trash";
+    Layout = "~/Views/MessageLayout/Index.cshtml";
+
+    var messages = Model ?? new List<MYAcademy_IdentitiyEmailProject.Entities.Message>();
+    var tr = new CultureInfo("tr-TR");
+}
+
+<style>
+    .tr-actions {
+        display: flex;
+        gap: 6px;
+    }
+
+    .tr-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 32px;
+        padding: 0 11px;
+        border-radius: 9px;
+        border: 1px solid #ECEBF5;
+        background: #fff;
+        color: #5D6075;
+        font-size: 12.5px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
+        transition: border-color .2s, color .2s;
+    }
+
+        .tr-btn:hover {
+            border-color: #8B7FD6;
+            color: #7467C7;
+        }
+
+        .tr-btn.danger:hover {
+            border-color: #E9A3B9;
+            color: #C2476B;
+        }
+
+    .tr-empty-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        height: 36px;
+        padding: 0 14px;
+        border-radius: 11px;
+        border: 1px solid #F4C0D1;
+        background: #FBE7EE;
+        color: #C2476B;
+        font-weight: 700;
+        font-size: 13px;
+        cursor: pointer;
+        font-family: inherit;
+    }
+
+    .tr-note {
+        margin: 0 0 4px;
+        padding: 10px 14px;
+        border-radius: 12px;
+        background: #F8F9FD;
+        color: #85899B;
+        font-size: 12.5px;
+    }
+</style>
+
+<section class="inbox">
+    <div class="panel list-panel">
+        <div class="list-head">
+            <div class="list-title">
+                <div>
+                    <h1>Çöp Kutusu</h1>
+                    <div class="sub">@messages.Count mesaj</div>
+                </div>
+                @if (messages.Any())
+                {
+                    <form asp-action="EmptyTrash" method="post" onsubmit="return confirm('Çöp kutusundaki tüm mesajlar kalıcı olarak silinecek. Emin misin?');">
+                        <button type="submit" class="tr-empty-btn"><i class="bi bi-trash3"></i> Çöpü Boşalt</button>
+                    </form>
+                }
+            </div>
+            <div class="tr-note"><i class="bi bi-info-circle"></i> Buradaki mesajları geri alabilir ya da kalıcı olarak silebilirsin.</div>
+        </div>
+
+        <div class="msg-list">
+            @foreach (var m in messages)
+            {
+                <article class="msg-item" tabindex="0" style="cursor:pointer" onclick="location.href='/Message/Detail/@m.MessageId'">
+                    <div class="lead"></div>
+                    <span class="avatar av-lav">@(string.IsNullOrEmpty(m.SenderEmail) ? "?" : m.SenderEmail.Substring(0, 1).ToUpper(tr))</span>
+                    <div class="mi-sender"><span class="sender">@m.SenderEmail</span></div>
+                    <div class="mi-main"><span class="subject">@m.Subject</span></div>
+                    <div class="mi-meta tr-actions" onclick="event.stopPropagation()">
+                        <form asp-action="Restore" asp-route-id="@m.MessageId" method="post">
+                            <button type="submit" class="tr-btn" title="Gelen kutusuna geri al"><i class="bi bi-arrow-counterclockwise"></i> Geri al</button>
+                        </form>
+                        <form asp-action="Purge" asp-route-id="@m.MessageId" method="post" onsubmit="return confirm('Bu mesaj kalıcı olarak silinecek. Emin misin?');">
+                            <button type="submit" class="tr-btn danger" title="Kalıcı sil"><i class="bi bi-x-circle"></i> Sil</button>
+                        </form>
+                    </div>
+                    <span class="time" title="Silinme: @m.DeletedDate?.ToString("d MMMM yyyy HH:mm", tr)">@m.DeletedDate?.ToString("d MMM HH:mm", tr)</span>
+                </article>
+            }
+
+            @if (!messages.Any())
+            {
+                <div class="empty-list">
+                    <div class="ic"><i class="bi bi-trash3"></i></div>
+                    <h6>Çöp kutun boş</h6>
+                    <div>Sildiğin mesajlar burada görünecek.</div>
+                </div>
+            }
+        </div>
+    </div>
+</section>

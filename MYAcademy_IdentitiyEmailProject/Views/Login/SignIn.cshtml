@@ -1,0 +1,140 @@
+@model UserLoginViewModel
+@{
+    Layout = null;
+
+    // Saate göre selamlama
+    var hour = DateTime.Now.Hour;
+    var greeting = hour < 6 ? "İyi geceler" : hour < 12 ? "Günaydın" : hour < 18 ? "İyi günler" : "İyi akşamlar";
+    var greetIcon = hour < 6 || hour >= 18 ? "bi-moon-stars" : hour < 12 ? "bi-sunrise" : "bi-brightness-high";
+
+    var hasError = !ViewData.ModelState.IsValid;
+    ViewData["MailoSay"] = hasError
+        ? "Hmm, bilgiler tutmadı 😕 Bir daha dener misin?"
+        : "Merhaba! Ben Mailo 👋 Seni tekrar görmek güzel.";
+}
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <title>Giriş Yap · Mailora</title>
+    <partial name="_MailoStyle" />
+</head>
+<body>
+    <div class="m-bg" aria-hidden="true"><span class="b1"></span><span class="b2"></span><span class="b3"></span></div>
+
+    <main class="m-page">
+        <div class="m-card">
+
+            <partial name="_MailoStage" />
+
+            <section class="m-form">
+                <div class="m-head">
+                    <span class="pill"><i class="bi @greetIcon"></i> @greeting</span>
+                    <h1>Tekrar <span class="grad">hoş geldin</span></h1>
+                    <p>Mailora hesabına giriş yap ve mesajlarına kaldığın yerden devam et.</p>
+                </div>
+
+                <form method="post" id="loginForm" autocomplete="on">
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="ok-alert"><i class="bi bi-check-circle-fill"></i> @TempData["Success"]</div>
+                    }
+                    <div asp-validation-summary="All" class="form-alert"></div>
+
+                    <div class="stack">
+                        <div class="field">
+                            <label for="Username">Kullanıcı Adı veya E-posta</label>
+                            <div class="iw">
+                                <i class="bi bi-person lead"></i>
+                                <input class="inp" asp-for="Username" type="text" placeholder="kullaniciadi veya ad@ornek.com"
+                                       autocomplete="username" spellcheck="false" autocapitalize="none" required />
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <div class="label-row">
+                                <label for="Password">Şifre</label>
+                                <a asp-controller="Password" asp-action="ForgotPassword">Şifremi unuttum</a>
+                            </div>                            <div class="iw">
+                                <i class="bi bi-lock lead"></i>
+                                <input class="inp" asp-for="Password" type="password" placeholder="
+niz"
+                                       autocomplete="current-password" required />
+                                <button type="button" class="eye-btn" data-eye="Password" aria-label="Şifreyi göster">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            <div class="caps" id="capsWarn"><i class="bi bi-capslock"></i> Caps Lock açık</div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-main" id="loginBtn">
+                        <span class="lbl">Giriş Yap</span>
+                        <i class="bi bi-arrow-right ic"></i>
+                        <span class="spin"></span>
+                    </button>
+
+                    <div class="trust">
+                        <span><i class="bi bi-shield-check"></i> Şifreli bağlantı</span>
+                        <span><i class="bi bi-envelope-check"></i> E-posta doğrulamalı</span>
+                        <span><i class="bi bi-clock-history"></i> 7 gün oturum</span>
+                    </div>
+
+                    <div class="m-foot">
+                        Hesabın yok mu? <a asp-controller="Register" asp-action="SignUp">Hemen kayıt ol</a>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        var M = window.Mailo;
+        var user = document.getElementById('Username');
+        var pw = document.getElementById('Password');
+
+        // Mailo yazılana bakar, şifrede gözlerini kapatır
+        M.watch(user, 'Kim olduğunu yazıyorsun, ben de bakıyorum 👀');
+        M.hide(pw, 'Bakmıyorum, söz! 🙈');
+
+        // Şifreyi göster / gizle (Mailo parmak arasından bakar)
+        document.querySelectorAll('[data-eye]').forEach(function (btn) {
+            btn.addEventListener('mousedown', function (e) { e.preventDefault(); });
+            btn.addEventListener('click', function () {
+                var input = document.getElementById(btn.dataset.eye);
+                var show = input.type === 'password';
+                input.type = show ? 'text' : 'password';
+                btn.innerHTML = show ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>';
+                btn.setAttribute('aria-label', show ? 'Şifreyi gizle' : 'Şifreyi göster');
+                if (document.activeElement === input) {
+                    M.cover(true, show);
+                    M.say(show ? 'Parmaklarımın arasından azıcık... 👀' : 'Tamam tamam, kapattım! 🙈');
+                }
+            });
+        });
+
+        // Caps Lock uyarısı
+        var caps = document.getElementById('capsWarn');
+        ['keyup', 'keydown'].forEach(function (ev) {
+            pw.addEventListener(ev, function (e) {
+                var on = !!(e.getModifierState && e.getModifierState('CapsLock'));
+                caps.classList.toggle('show', on);
+            });
+        });
+
+        // Gönderirken
+        document.getElementById('loginForm').addEventListener('submit', function () {
+            var b = document.getElementById('loginBtn');
+            b.classList.add('is-loading');
+            b.querySelector('.lbl').textContent = 'Giriş yapılıyor';
+            M.cover(false); M.mood('happy'); M.say('Kontrol ediyorum... 🔍'); M.jump();
+        });
+
+        // Sunucudan hata döndüyse Mailo üzülür
+        @if (hasError)
+        {
+            <text>M.mood('sad'); M.shake();</text>
+        }
+    </script>
+</body>
+</html>

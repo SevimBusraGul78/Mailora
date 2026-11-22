@@ -1,0 +1,195 @@
+@* Sol panel: Mailo maskotu + konuşma balonu.
+   Sayfa, ViewData["MailoSay"] ile Mailo'nun ilk cümlesini belirler. *@
+@{
+    var firstWords = ViewData["MailoSay"] as string ?? "Merhaba! Ben Mailo 👋";
+}
+
+<aside class="m-stage">
+    <a class="m-brand" href="/Login/SignIn">
+        <span class="logo"><i class="bi bi-envelope-paper-heart-fill"></i></span> Mail<b>ora</b>
+    </a>
+
+    <div class="m-hero">
+        <div class="bubble" id="mailoSay">@firstWords</div>
+
+        <svg class="mailo" id="mailo" viewBox="0 0 240 232" aria-hidden="true">
+            <defs>
+                <linearGradient id="mBodyG" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stop-color="#B3A8F0" />
+                    <stop offset="1" stop-color="#7467C7" />
+                </linearGradient>
+                <linearGradient id="mFlapG" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#A397E8" />
+                    <stop offset="1" stop-color="#8174D2" />
+                </linearGradient>
+            </defs>
+
+            <ellipse class="shadow" cx="120" cy="218" rx="64" ry="9" fill="rgba(91,80,170,.18)" />
+
+            <g class="body">
+                <!-- Zarftan dışarı bakan mektup -->
+                <g class="letter">
+                    <rect x="64" y="30" width="112" height="62" rx="9" fill="#fff" transform="rotate(-4 120 61)" />
+                    <rect x="78" y="44" width="58" height="6" rx="3" fill="#E3DEFA" transform="rotate(-4 120 61)" />
+                    <rect x="78" y="56" width="80" height="6" rx="3" fill="#EEEBFC" transform="rotate(-4 120 61)" />
+                </g>
+
+                <!-- Zarf gövdesi ve kapağı -->
+                <rect x="36" y="60" width="168" height="134" rx="26" fill="url(#mBodyG)" />
+                <path d="M36 86 Q36 60 62 60 L178 60 Q204 60 204 86 L129 130 Q120 135 111 130 Z" fill="url(#mFlapG)" />
+                <path d="M46 82 L120 125 L194 82" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="3" stroke-linecap="round" />
+
+                <!-- Kalp mühür -->
+                <circle cx="120" cy="120" r="11" fill="#ED93B1" />
+                <path d="M120 125.5 L114.6 120.2 A3.3 3.3 0 0 1 120 116 A3.3 3.3 0 0 1 125.4 120.2 Z" fill="#fff" />
+
+                <!-- Gözler -->
+                <g class="eye">
+                    <ellipse cx="88" cy="150" rx="14" ry="15" fill="#fff" />
+                    <g class="pupil" id="pupL">
+                        <circle cx="88" cy="152" r="7" fill="#26215C" />
+                        <circle cx="91" cy="149" r="2.4" fill="#fff" />
+                    </g>
+                </g>
+                <g class="eye">
+                    <ellipse cx="152" cy="150" rx="14" ry="15" fill="#fff" />
+                    <g class="pupil" id="pupR">
+                        <circle cx="152" cy="152" r="7" fill="#26215C" />
+                        <circle cx="155" cy="149" r="2.4" fill="#fff" />
+                    </g>
+                </g>
+
+                <!-- Yanaklar ve ağız -->
+                <ellipse cx="68" cy="172" rx="9" ry="5.5" fill="#F4C0D1" opacity=".85" />
+                <ellipse cx="172" cy="172" rx="9" ry="5.5" fill="#F4C0D1" opacity=".85" />
+                <path class="mouth" id="mouth" d="M108 172 Q120 184 132 172" fill="none" stroke="#26215C" stroke-width="4" stroke-linecap="round" />
+
+                <!-- Eller: şifre yazılırken gözleri kapatır -->
+                <g class="hand" id="handL"><ellipse cx="64" cy="202" rx="17" ry="14" fill="#9A8EE3" stroke="#fff" stroke-width="3" /></g>
+                <g class="hand" id="handR"><ellipse cx="176" cy="202" rx="17" ry="14" fill="#9A8EE3" stroke="#fff" stroke-width="3" /></g>
+            </g>
+        </svg>
+
+        <div class="chips">
+            <span><i class="bi bi-inbox"></i> Akıllı gelen kutusu</span>
+            <span><i class="bi bi-envelope-check"></i> E-posta doğrulama</span>
+            <span><i class="bi bi-star"></i> Yıldızlı mesajlar</span>
+        </div>
+    </div>
+
+    <div class="m-stage-foot">
+        <span>© 2026 Mailora</span>
+        <span><i class="bi bi-lock-fill"></i> 256-bit SSL ile korunur</span>
+    </div>
+</aside>
+
+<script>
+    // ===== Mailo'yu kontrol eden küçük kütüphane =====
+    // Sayfalar şunları kullanır: Mailo.say, Mailo.mood, Mailo.cover, Mailo.look,
+    // Mailo.follow, Mailo.shake, Mailo.jump, Mailo.watch, Mailo.hide
+    window.Mailo = (function () {
+        var svg = document.getElementById('mailo');
+        var pupils = [document.getElementById('pupL'), document.getElementById('pupR')];
+        var handL = document.getElementById('handL');
+        var handR = document.getElementById('handR');
+        var mouth = document.getElementById('mouth');
+        var bubble = document.getElementById('mailoSay');
+        var following = true;
+        var covered = false;
+
+        var mouths = {
+            smile: 'M108 172 Q120 184 132 172',
+            happy: 'M104 170 Q120 192 136 170',
+            sad: 'M108 181 Q120 169 132 181',
+            flat: 'M110 176 L130 176',
+            wow: 'M114 176 Q120 164 126 176 Q120 188 114 176'
+        };
+
+        // Göz bebeklerini hareket ettir (x, y: -1 ile 1 arası)
+        function look(x, y) {
+            x = Math.max(-1, Math.min(1, x));
+            y = Math.max(-1, Math.min(1, y));
+            var t = 'translate(' + (x * 5) + 'px,' + (y * 4) + 'px)';
+            pupils.forEach(function (p) { p.style.transform = t; });
+        }
+
+        // Ağız ifadesi: smile, happy, sad, flat, wow
+        function mood(name) {
+            var d = mouths[name] || mouths.smile;
+            mouth.setAttribute('d', d);
+            mouth.style.d = 'path("' + d + '")';
+            svg.classList.toggle('happy', name === 'happy');
+        }
+
+        // Konuşma balonu
+        function say(text) {
+            if (bubble.textContent === text) return;
+            bubble.textContent = text;
+            bubble.classList.remove('pop');
+            void bubble.offsetWidth;
+            bubble.classList.add('pop');
+        }
+
+        // Elleriyle gözlerini kapat (peek = parmak arasından bak)
+        function cover(on, peek) {
+            covered = on;
+            handL.style.transform = on ? 'translate(24px,-54px)' : '';
+            handR.style.transform = on ? (peek ? 'translate(-18px,-26px)' : 'translate(-24px,-54px)') : '';
+            if (on) look(peek ? 0.6 : 0, 0.3);
+        }
+
+        function replay(cls) {
+            svg.classList.remove(cls);
+            void svg.getBoundingClientRect();
+            svg.classList.add(cls);
+            setTimeout(function () { svg.classList.remove(cls); }, 800);
+        }
+
+        // Yazılan metnin uzunluğuna göre forma doğru bak
+        function trackCaret(input) {
+            var n = Math.min(input.value.length, 32) / 32;
+            look(0.15 + n * 0.85, 0.65);
+        }
+
+        // Boştayken fareyi takip et
+        document.addEventListener('mousemove', function (e) {
+            if (!following || covered) return;
+            var r = svg.getBoundingClientRect();
+            look((e.clientX - (r.left + r.width / 2)) / (window.innerWidth / 2),
+                 (e.clientY - (r.top + r.height / 2)) / (window.innerHeight / 2));
+        });
+
+        // Ara sıra göz kırp
+        setInterval(function () {
+            if (covered) return;
+            svg.classList.add('blink');
+            setTimeout(function () { svg.classList.remove('blink'); }, 140);
+        }, 3800);
+
+        return {
+            say: say, mood: mood, cover: cover, look: look,
+            follow: function (on) { following = on; },
+            shake: function () { replay('shake'); },
+            jump: function () { replay('jump'); },
+
+            // Normal kutu: yazarken yazılana bakar
+            watch: function (input, text) {
+                input.addEventListener('focus', function () {
+                    following = false; cover(false); mood('smile'); say(text); trackCaret(input);
+                });
+                input.addEventListener('input', function () { trackCaret(input); });
+                input.addEventListener('blur', function () { following = true; });
+            },
+
+            // Şifre kutusu: gözlerini kapatır
+            hide: function (input, text) {
+                input.addEventListener('focus', function () {
+                    following = false; mood('flat'); say(text); cover(true, input.type === 'text');
+                });
+                input.addEventListener('blur', function () {
+                    cover(false); following = true; mood('smile');
+                });
+            }
+        };
+    })();
+</script>

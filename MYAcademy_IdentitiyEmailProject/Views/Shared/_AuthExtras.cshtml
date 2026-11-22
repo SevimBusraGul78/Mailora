@@ -1,0 +1,120 @@
+@* Giriş ve doğrulama sayfalarının ortak ek stilleri (Mailora teması üzerine) *@
+<style>
+    /* ---------- Hata kutusu (asp-validation-summary) ---------- */
+    .form-alert.validation-summary-valid { display: none; }
+    .form-alert.validation-summary-errors {
+        display: flex; gap: 10px; align-items: flex-start;
+        background: var(--rose); color: var(--danger); border: 1px solid #F4C0D1;
+        border-radius: 13px; padding: 12px 14px; margin-bottom: 18px;
+        font-size: 13.5px; font-weight: 600; animation: alertIn .35s var(--ease);
+    }
+    .form-alert.validation-summary-errors::before {
+        content: "!"; flex: 0 0 20px; height: 20px; border-radius: 50%;
+        background: var(--danger); color: #fff; display: grid; place-items: center;
+        font-size: 12px; font-weight: 800;
+    }
+    .form-alert ul { margin: 0; padding: 0; list-style: none; }
+    @@keyframes alertIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+
+    /* ---------- Başlık süsleri ---------- */
+    .hello-pill {
+        display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px;
+        background: var(--lavender); color: var(--accent-dark); font-size: 12.5px; font-weight: 700; margin-bottom: 14px;
+    }
+    .hello-pill i { display: inline-block; animation: wave 2.4s ease-in-out infinite; transform-origin: 70% 70%; }
+    @@keyframes wave { 0%, 60%, 100% { transform: rotate(0); } 10%, 30% { transform: rotate(14deg); } 20%, 40% { transform: rotate(-8deg); } }
+    .grad {
+        background: linear-gradient(135deg, #9C91E2 0%, #7467C7 55%, #6FA8E8 100%);
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .stack { display: grid; gap: 16px; }
+
+    /* ---------- Buton yükleniyor durumu ---------- */
+    .btn-primary-x .spinner-sm { display: none; }
+    .btn-primary-x.is-loading .spinner-sm { display: inline-block; }
+    .btn-primary-x.is-loading .lbl-ic { display: none; }
+
+    /* ---------- Güven rozetleri ---------- */
+    .trust { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .trust span {
+        display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px;
+        background: var(--bg); border: 1px solid var(--border); font-size: 11.5px; font-weight: 600; color: var(--muted);
+    }
+    .trust i { color: var(--success-soft); }
+
+    /* ---------- Kayıt ol kartı ---------- */
+    .alt-cta {
+        display: flex; align-items: center; gap: 12px; margin-top: 22px; padding: 14px 16px; border-radius: 16px;
+        border: 1.5px dashed #DCD7F3; background: linear-gradient(135deg, #FBFAFF, #F4F7FF); color: var(--text);
+        transition: transform .2s var(--ease), border-color .2s, box-shadow .2s;
+    }
+    .alt-cta:hover { transform: translateY(-2px); border-color: var(--accent); box-shadow: var(--shadow); color: var(--text); }
+    .alt-cta .ic {
+        width: 40px; height: 40px; border-radius: 12px; flex: 0 0 40px; display: grid; place-items: center;
+        background: var(--mint); color: var(--success); font-size: 18px;
+    }
+    .alt-cta b { display: block; font-size: 14px; }
+    .alt-cta small { color: var(--muted); font-size: 12.5px; }
+    .alt-cta .go { margin-left: auto; color: var(--accent-dark); font-size: 18px; transition: transform .2s; }
+    .alt-cta:hover .go { transform: translateX(4px); }
+
+    /* ---------- Doğrulama: zarf rozeti ---------- */
+    .verify-badge {
+        position: relative; width: 76px; height: 76px; border-radius: 24px; display: grid; place-items: center;
+        background: linear-gradient(135deg, #EFEBFC, #E6EEFF); color: var(--accent-dark); font-size: 34px;
+        margin-bottom: 18px; box-shadow: 0 12px 28px rgba(116, 103, 199, .18); animation: floaty 3.4s ease-in-out infinite;
+    }
+    .verify-badge::after {
+        content: ""; position: absolute; inset: -8px; border-radius: 30px; border: 2px solid #D9D3F6;
+        animation: ripple 2.4s ease-out infinite;
+    }
+    .verify-badge .dot {
+        position: absolute; top: -7px; right: -7px; width: 28px; height: 28px; border-radius: 50%;
+        background: var(--success-soft); color: #fff; display: grid; place-items: center; font-size: 14px; border: 3px solid #fff;
+    }
+    @@keyframes floaty { 50% { transform: translateY(-6px); } }
+    @@keyframes ripple { 0% { transform: scale(.92); opacity: 1; } 100% { transform: scale(1.28); opacity: 0; } }
+
+    .sent-to {
+        display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px 12px; border-radius: 12px;
+        background: var(--bg); border: 1px solid var(--border); font-weight: 700; font-size: 13.5px; margin: 6px 0 22px;
+    }
+    .sent-to i { color: var(--accent); }
+    .sent-to button {
+        border: none; background: none; color: var(--accent-dark); font-weight: 700; font-size: 12.5px;
+        cursor: pointer; padding: 0 0 0 4px; font-family: inherit;
+    }
+
+    /* ---------- 6 kutulu kod alanı ---------- */
+    .otp-label { display: block; font-size: 12.5px; font-weight: 700; color: #5D6075; margin-bottom: 9px; }
+    .otp { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+    .otp input {
+        width: 100%; height: 60px; border-radius: 14px; border: 1.5px solid var(--border); background: var(--bg);
+        text-align: center; font-size: 24px; font-weight: 800; color: var(--text); font-family: inherit;
+        outline: none; caret-color: var(--accent);
+        transition: border-color .2s, background .2s, box-shadow .2s, transform .15s;
+    }
+    .otp input:focus { background: #fff; border-color: #BFB6EE; box-shadow: 0 0 0 4px rgba(139, 127, 214, .13); transform: translateY(-2px); }
+    .otp input.filled { background: #fff; border-color: var(--accent); color: var(--accent-dark); }
+    .otp.has-error input { border-color: #E9A3B9; background: #FFF7F9; }
+    .otp.done input { border-color: var(--success-soft); background: #F3FBF7; color: var(--success); }
+    .otp.shake { animation: shake .45s; }
+    @@keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+    .otp-err { display: none; margin-top: 10px; font-size: 12.5px; font-weight: 600; color: var(--danger); }
+    .otp-err.show { display: block; }
+    .otp-progress { height: 4px; border-radius: 4px; background: var(--border); margin-top: 14px; overflow: hidden; }
+    .otp-progress span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #9C91E2, #7467C7); transition: width .25s var(--ease); }
+
+    .tips { margin-top: 18px; display: grid; gap: 8px; }
+    .tip { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; background: var(--bg); font-size: 12.5px; color: #5D6075; line-height: 1.5; }
+    .tip i { color: var(--accent); font-size: 15px; margin-top: 1px; }
+    .tip a { font-weight: 700; }
+
+    @@media (max-width: 420px) {
+        .otp { gap: 6px; }
+        .otp input { height: 52px; font-size: 20px; border-radius: 11px; }
+    }
+    @@media (prefers-reduced-motion: reduce) {
+        .hello-pill i, .verify-badge, .verify-badge::after, .otp.shake { animation: none !important; }
+    }
+</style>

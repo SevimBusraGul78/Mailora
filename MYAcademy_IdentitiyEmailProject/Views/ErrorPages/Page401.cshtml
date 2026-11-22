@@ -1,0 +1,79 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <title>401 · Mailora</title>
+    <partial name="_ErrorStyle" />
+</head>
+<body>
+    <div class="err-bg" aria-hidden="true">
+        <span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span>
+    </div>
+
+    <main class="err-page">
+        <div class="err-card">
+            <a class="err-brand" href="/Login/SignIn">
+                <span class="logo"><i class="bi bi-envelope-paper-heart-fill"></i></span> Mail<b>ora</b>
+            </a>
+
+            <!-- Geri sayım halkası -->
+            <div class="ring">
+                <svg width="104" height="104" viewBox="0 0 104 104">
+                    <circle class="track" cx="52" cy="52" r="44" fill="none" stroke-width="8" />
+                    <circle class="arc" id="arc" cx="52" cy="52" r="44" fill="none" stroke-width="8" stroke-linecap="round" />
+                </svg>
+                <span class="num" id="num">30</span>
+                <span class="ic"><i class="bi bi-person-lock"></i></span>
+            </div>
+
+            <h1>Önce giriş yapmalısın</h1>
+            <p id="msg">Bu sayfa için oturum açman gerekiyor. <b id="sec">5</b> saniye içinde giriş sayfasına yönlendiriliyorsun.</p>
+
+            <div class="err-actions">
+                <a href="/Login/SignIn" class="btn-x primary"><i class="bi bi-box-arrow-in-right"></i> Hemen Giriş Yap</a>
+                <a href="/Register/SignUp" class="btn-x ghost"><i class="bi bi-person-plus"></i> Kayıt Ol</a>
+            </div>
+
+            <button type="button" class="stop-link" id="stop">Yönlendirmeyi durdur</button>
+
+            <div class="err-foot">© 2026 Mailora</div>
+        </div>
+    </main>
+
+    <script>
+        (function () {
+            var total = 30, left = total;
+            var arc = document.getElementById('arc');
+            var num = document.getElementById('num');
+            var sec = document.getElementById('sec');
+            var msg = document.getElementById('msg');
+            var stop = document.getElementById('stop');
+            var length = 2 * Math.PI * 44;
+
+            arc.style.strokeDasharray = length;
+            arc.style.strokeDashoffset = 0;
+
+            var timer = setInterval(function () {
+                left--;
+                num.textContent = left;
+                sec.textContent = left;
+                arc.style.strokeDashoffset = length * (total - left) / total;
+
+                if (left <= 0) {
+                    clearInterval(timer);
+                    window.location.href = '/Login/SignIn';
+                }
+            }, 1000);
+
+            stop.addEventListener('click', function () {
+                clearInterval(timer);
+                num.innerHTML = '<i class="bi bi-pause-fill"></i>';
+                msg.textContent = 'Yönlendirme durduruldu. Hazır olduğunda giriş yapabilirsin.';
+                stop.style.display = 'none';
+            });
+        })();
+    </script>
+</body>
+</html>

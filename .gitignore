@@ -1,0 +1,40 @@
+## Visual Studio / .NET
+.vs/
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ll]og/
+[Ll]ogs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.rsuser
+*.cache
+*.pdb
+*.dbmdl
+*.jfm
+TestResults/
+*.nupkg
+packages/
+PublishScripts/
+*.pubxml
+*.publishproduction
+
+## Kullanıcı yüklemeleri (profil fotoğrafları)
+**/wwwroot/uploads/
+
+## Yerel ortam ve gizli bilgiler
+appsettings.*.local.json
+.env
+
+## Repoya ait olmayan yerel klasörler
+Claude outputs/
+
+## İşletim sistemi
+Thumbs.db
+Desktop.ini
+.DS_Store

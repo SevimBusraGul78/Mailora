@@ -1,0 +1,646 @@
+﻿@model DashboardViewModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Dashboard";
+    ViewData["ActiveMenu"] = "dashboard";
+    Layout = "~/Views/MessageLayout/Index.cshtml";
+
+    var tr = new CultureInfo("tr-TR");
+    var hour = DateTime.Now.Hour;
+    var greeting = hour < 6 ? "İyi geceler" : hour < 12 ? "Günaydın" : hour < 18 ? "İyi günler" : "İyi akşamlar";
+    var firstName = string.IsNullOrEmpty(Model.FullName) ? "" : Model.FullName.Split(' ')[0];
+
+    // ---- Aktivite haritası hesapları ----
+    var counts = Model.HeatmapCounts;
+    var maxDay = counts.DefaultIfEmpty(0).Max();
+    var offset = ((int)Model.HeatmapStart.DayOfWeek + 6) % 7;      // Pazartesi = 0
+    var total = counts.Sum();
+    var activeDays = counts.Count(c => c > 0);
+    var busiestDate = Model.HeatmapStart.AddDays(counts.IndexOf(maxDay));
+    var average = activeDays == 0 ? 0 : Math.Round((double)total / activeDays, 1);
+
+    // Seri: sondan geriye doğru kaç gün üst üste mesajlaşılmış
+    var streak = 0;
+    for (int i = counts.Count - 1; i >= 0 && counts[i] > 0; i--) streak++;
+
+    var topMax = Model.TopContacts.Any() ? Model.TopContacts.Max(c => c.Count) : 1;
+}
+
+<style>
+    .db {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: grid;
+        gap: 16px;
+    }
+
+    .db-hello {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+        .db-hello h1 {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -.4px;
+            margin: 0 0 2px;
+        }
+
+        .db-hello p {
+            margin: 0;
+            color: #85899B;
+            font-size: 13.5px;
+        }
+
+    .db-new {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 42px;
+        padding: 0 18px;
+        border-radius: 13px;
+        font-weight: 700;
+        color: #fff;
+        background: linear-gradient(135deg, #9C91E2, #7467C7);
+        box-shadow: 0 8px 20px rgba(139,127,214,.32);
+        text-decoration: none;
+        transition: transform .2s;
+    }
+
+        .db-new:hover {
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+    /* Kartlar */
+    .db-stats {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .db-stat {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 4px 20px rgba(91,80,170,.06);
+        text-decoration: none;
+        color: inherit;
+        transition: transform .2s, box-shadow .2s;
+    }
+
+        .db-stat:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 26px rgba(91,80,170,.13);
+            color: inherit;
+        }
+
+        .db-stat .ic {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            flex: 0 0 40px;
+            display: grid;
+            place-items: center;
+            font-size: 18px;
+        }
+
+        .db-stat .n {
+            font-size: 22px;
+            font-weight: 800;
+            line-height: 1.1;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .db-stat .l {
+            font-size: 12px;
+            color: #85899B;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+    .c-lav {
+        background: #EAE6FA;
+        color: #7467C7;
+    }
+
+    .c-rose {
+        background: #FBE7EE;
+        color: #C2476B;
+    }
+
+    .c-mint {
+        background: #E3F5EE;
+        color: #3E9A77;
+    }
+
+    .c-sun {
+        background: #FFF4D6;
+        color: #B98612;
+    }
+
+    .c-peach {
+        background: #FDEEE6;
+        color: #C9774A;
+    }
+
+    .c-gray {
+        background: #F1F1F6;
+        color: #6B6E80;
+    }
+
+    /* Kart kutuları ve sıralar */
+    .db-card {
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(91,80,170,.06);
+        padding: 18px 20px;
+        min-width: 0;
+    }
+
+        .db-card h2 {
+            font-size: 15px;
+            font-weight: 800;
+            margin: 0 0 2px;
+        }
+
+        .db-card .sub {
+            color: #85899B;
+            font-size: 12px;
+            margin-bottom: 12px;
+        }
+
+    .db-rowA {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+        gap: 16px;
+    }
+
+    .db-rowB {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.25fr);
+        gap: 16px;
+    }
+
+    .db-chart {
+        position: relative;
+        height: 190px;
+    }
+
+    .db-empty {
+        height: 170px;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        color: #A6A9B8;
+        font-size: 13px;
+    }
+
+    /* Aktivite haritası + yanındaki mini istatistikler */
+    .hm-box {
+        display: flex;
+        gap: 28px;
+        align-items: center;
+    }
+
+    .hm-side {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .hm-mini {
+        background: #F8F7FD;
+        border-radius: 14px;
+        padding: 12px 14px;
+    }
+
+        .hm-mini .v {
+            font-size: 20px;
+            font-weight: 800;
+            color: #4F43A8;
+            line-height: 1.2;
+        }
+
+        .hm-mini .k {
+            font-size: 11.5px;
+            color: #85899B;
+            font-weight: 600;
+        }
+
+    .hm-grid {
+        display: flex;
+        gap: 6px;
+    }
+
+    .hm-days {
+        display: grid;
+        grid-template-rows: repeat(7, 17px);
+        gap: 4px;
+        font-size: 10.5px;
+        color: #A6A9B8;
+    }
+
+        .hm-days span {
+            line-height: 17px;
+        }
+
+    .hm {
+        display: grid;
+        grid-template-rows: repeat(7, 17px);
+        grid-auto-flow: column;
+        grid-auto-columns: 17px;
+        gap: 4px;
+    }
+
+        .hm span {
+            border-radius: 4px;
+            background: #F1F0F8;
+            transition: transform .15s;
+        }
+
+            .hm span:hover {
+                transform: scale(1.35);
+            }
+
+        .hm .l1 {
+            background: #D9D3F6;
+        }
+
+        .hm .l2 {
+            background: #B4A9EC;
+        }
+
+        .hm .l3 {
+            background: #8B7FD6;
+        }
+
+        .hm .l4 {
+            background: #5E50B8;
+        }
+
+        .hm .pad {
+            background: transparent;
+        }
+
+    .hm-legend {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 10px;
+        color: #A6A9B8;
+        font-size: 11px;
+    }
+
+        .hm-legend span {
+            width: 11px;
+            height: 11px;
+            border-radius: 3px;
+        }
+
+    /* En çok yazıştıkların */
+    .tc {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 0;
+    }
+
+        .tc .av {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            flex: 0 0 32px;
+            display: grid;
+            place-items: center;
+            background: #EAE6FA;
+            color: #7467C7;
+            font-weight: 800;
+            font-size: 13px;
+        }
+
+        .tc .info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .tc .mail {
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tc .bar {
+            height: 5px;
+            border-radius: 5px;
+            background: #F1F0F8;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+            .tc .bar i {
+                display: block;
+                height: 100%;
+                border-radius: 5px;
+                background: linear-gradient(90deg, #B4A9EC, #7467C7);
+                width: 0;
+                transition: width 1s cubic-bezier(.2,.8,.2,1);
+            }
+
+        .tc .cnt {
+            font-weight: 800;
+            color: #7467C7;
+            font-size: 13px;
+        }
+
+    /* Son mesajlar */
+    .rc a {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 7px 6px;
+        text-decoration: none;
+        color: inherit;
+        border-radius: 10px;
+    }
+
+        .rc a:hover {
+            background: #F8F9FD;
+        }
+
+    .rc .av {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        flex: 0 0 32px;
+        display: grid;
+        place-items: center;
+        background: #EAE6FA;
+        color: #7467C7;
+        font-weight: 800;
+        font-size: 13px;
+    }
+
+    .rc .t {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .rc .s {
+        font-weight: 700;
+        font-size: 13px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .rc .f {
+        color: #85899B;
+        font-size: 11.5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .rc .d {
+        color: #A6A9B8;
+        font-size: 11.5px;
+        white-space: nowrap;
+    }
+
+    .rc .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #8B7FD6;
+        flex: 0 0 7px;
+    }
+
+    /* Küçük ekranlarda alt alta */
+    @@media (max-width: 1300px) {
+        .db-stats {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 1100px) {
+        .db-rowA, .db-rowB {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .hm-box {
+            flex-wrap: wrap;
+        }
+    }
+</style>
+
+<div class="db">
+
+    <!-- Karşılama -->
+    <div class="db-hello">
+        <div>
+            <h1>@greeting@(string.IsNullOrEmpty(firstName) ? "" : ", " + firstName) 👋</h1>
+            <p>
+                @if (Model.UnreadCount > 0)
+                {
+                    <span><b>@Model.UnreadCount</b> okunmamış mesajın var.</span>
+                }
+                else
+                {
+                    <span>Tüm mesajlarını okumuşsun, harika!</span>
+                }
+            </p>
+        </div>
+        <a class="db-new" href="/Message/CreateMessage"><i class="bi bi-pencil-square"></i> Yeni Mesaj</a>
+    </div>
+
+    <!-- 6 kart -->
+    <div class="db-stats">
+        <a class="db-stat" href="/Message/Inbox"><span class="ic c-lav"><i class="bi bi-inbox"></i></span><div><div class="n" data-count="@Model.InboxCount">0</div><div class="l">Gelen</div></div></a>
+        <a class="db-stat" href="/Message/Inbox?filter=unread"><span class="ic c-rose"><i class="bi bi-envelope"></i></span><div><div class="n" data-count="@Model.UnreadCount">0</div><div class="l">Okunmamış</div></div></a>
+        <a class="db-stat" href="/Message/SendBox"><span class="ic c-mint"><i class="bi bi-send"></i></span><div><div class="n" data-count="@Model.SentCount">0</div><div class="l">Gönderilen</div></div></a>
+        <a class="db-stat" href="/Message/Starred"><span class="ic c-sun"><i class="bi bi-star"></i></span><div><div class="n" data-count="@Model.StarredCount">0</div><div class="l">Yıldızlı</div></div></a>
+        <a class="db-stat" href="/Message/Drafts"><span class="ic c-peach"><i class="bi bi-file-earmark-text"></i></span><div><div class="n" data-count="@Model.DraftCount">0</div><div class="l">Taslak</div></div></a>
+        <a class="db-stat" href="/Message/Trash"><span class="ic c-gray"><i class="bi bi-trash3"></i></span><div><div class="n" data-count="@Model.TrashCount">0</div><div class="l">Çöp Kutusu</div></div></a>
+    </div>
+
+    <!-- 2. sıra: harita + yoğun saatler -->
+    <div class="db-rowA">
+        <div class="db-card">
+            <h2>Aktivite Haritası</h2>
+            <div class="sub">Son 3 ay · her kare bir gün</div>
+            <div class="hm-box">
+                <div>
+                    <div class="hm-grid">
+                        <div class="hm-days"><span>Pzt</span><span></span><span>Çar</span><span></span><span>Cum</span><span></span><span>Paz</span></div>
+                        <div class="hm">
+                            @for (int i = 0; i < offset; i++)
+                            {
+                                <span class="pad"></span>
+                            }
+                            @for (int i = 0; i < counts.Count; i++)
+                            {
+                                var c = counts[i];
+                                var level = c == 0 ? 0 : (int)Math.Ceiling(c * 4.0 / maxDay);
+                                <span class="l@(level)" title="@Model.HeatmapStart.AddDays(i).ToString("d MMMM dddd", tr): @c mesaj"></span>
+                            }
+                        </div>
+                    </div>
+                    <div class="hm-legend">Az <span style="background:#F1F0F8"></span><span style="background:#D9D3F6"></span><span style="background:#B4A9EC"></span><span style="background:#8B7FD6"></span><span style="background:#5E50B8"></span> Çok</div>
+                </div>
+
+                <div class="hm-side">
+                    <div class="hm-mini"><div class="v" data-count="@total">0</div><div class="k">Toplam mesajlaşma</div></div>
+                    <div class="hm-mini"><div class="v" data-count="@activeDays">0</div><div class="k">Aktif gün</div></div>
+                    <div class="hm-mini"><div class="v">@(maxDay > 0 ? busiestDate.ToString("d MMM", tr) : "-")</div><div class="k">En yoğun gün (@maxDay mesaj)</div></div>
+                    <div class="hm-mini"><div class="v">@streak gün 🔥</div><div class="k">Güncel seri</div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="db-card">
+            <h2>Yoğun Saatler</h2>
+            <div class="sub">Gün içinde mesaj trafiği · ortalama @average mesaj/gün</div>
+            <div class="db-chart"><canvas id="hourChart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- 3. sıra: kişiler + kategoriler + son mesajlar -->
+    <div class="db-rowB">
+        <div class="db-card">
+            <h2>En Çok Yazıştıkların</h2>
+            <div class="sub">Gelen + gönderilen mesaj sayısı</div>
+            @if (Model.TopContacts.Any())
+            {
+                foreach (var tc in Model.TopContacts)
+                {
+                    <div class="tc">
+                        <span class="av">@tc.Email.Substring(0, 1).ToUpper(tr)</span>
+                        <div class="info">
+                            <div class="mail">@tc.Email</div>
+                            <div class="bar"><i data-width="@(tc.Count * 100 / topMax)"></i></div>
+                        </div>
+                        <span class="cnt">@tc.Count</span>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="db-empty">Henüz kimseyle yazışmadın</div>
+            }
+        </div>
+
+        <div class="db-card">
+            <h2>Kategoriler</h2>
+            <div class="sub">Gelen mesajların dağılımı</div>
+            @if (Model.CategoryCounts.Any())
+            {
+                <div class="db-chart"><canvas id="categoryChart"></canvas></div>
+            }
+            else
+            {
+                <div class="db-empty">Henüz kategori verisi yok</div>
+            }
+        </div>
+
+        <div class="db-card">
+            <h2>Son Gelen Mesajlar</h2>
+            <div class="sub">Gelen kutundaki en yeni 5 mesaj</div>
+            <div class="rc">
+                @foreach (var m in Model.RecentMessages)
+                {
+                    <a href="/Message/Detail/@m.MessageId">
+                        <span class="dot" style="visibility:@(m.IsRead ? "hidden" : "visible")"></span>
+                        <span class="av">@m.SenderEmail.Substring(0, 1).ToUpper(tr)</span>
+                        <span class="t">
+                            <div class="s">@m.Subject</div>
+                            <div class="f">@m.SenderEmail @(m.Category != null ? "· " + m.Category.CategoryName : "")</div>
+                        </span>
+                        <span class="d">@m.SendDate.ToString("d MMM", tr)</span>
+                    </a>
+                }
+                @if (!Model.RecentMessages.Any())
+                {
+                    <div class="db-empty">Gelen kutun boş</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        (() => {
+            // ---- Sayaçlar: 0'dan hedefe, sona doğru yavaşlayarak ----
+            document.querySelectorAll('[data-count]').forEach(el => {
+                const target = +el.dataset.count;
+                const start = performance.now();
+                const tick = now => {
+                    const p = Math.min(1, (now - start) / 1200);
+                    el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3)));
+                    if (p < 1) requestAnimationFrame(tick);
+                };
+                requestAnimationFrame(tick);
+            });
+
+            // ---- Kişi çubukları soldan sağa dolsun ----
+            setTimeout(() => {
+                document.querySelectorAll('.tc .bar i').forEach(b => b.style.width = b.dataset.width + '%');
+            }, 200);
+
+            // ---- Grafikler ----
+            Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+            Chart.defaults.color = '#85899B';
+
+            new Chart(document.getElementById('hourChart'), {
+                type: 'radar',
+                data: {
+                    labels: ['00-03', '03-06', '06-09', '09-12', '12-15', '15-18', '18-21', '21-24'],
+                    datasets: [{
+                        label: 'Mesaj',
+                        data: @Json.Serialize(Model.HourlyCounts),
+                        backgroundColor: 'rgba(139,127,214,.22)',
+                        borderColor: '#8B7FD6',
+                        pointBackgroundColor: '#5E50B8',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { r: { beginAtZero: true, ticks: { display: false }, grid: { color: '#EEECF8' }, angleLines: { color: '#EEECF8' }, pointLabels: { font: { size: 11 } } } }
+                }
+            });
+
+            const catCanvas = document.getElementById('categoryChart');
+            if (catCanvas) {
+                new Chart(catCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: @Json.Serialize(Model.CategoryNames),
+                        datasets: [{
+                            data: @Json.Serialize(Model.CategoryCounts),
+                            backgroundColor: ['#8B7FD6', '#5CC09A', '#EBA27A', '#6FA8E8', '#E07597', '#F2C14E', '#B4A9EC', '#9AD6C0'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        cutout: '66%',
+                        plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8, font: { size: 11.5 } } } }
+                    }
+                });
+            }
+        })();
+    </script>
+}

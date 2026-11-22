@@ -1,0 +1,47 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <title>404 · Mailora</title>
+    <partial name="_ErrorStyle" />
+</head>
+<body>
+    <div class="err-bg" aria-hidden="true">
+        <span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span>
+        <i class="bi bi-envelope-fill fly"></i>
+        <i class="bi bi-envelope-open fly f2"></i>
+    </div>
+
+    <main class="err-page">
+        <div class="err-card">
+            <a class="err-brand" href="/Message/Inbox">
+                <span class="logo"><i class="bi bi-envelope-paper-heart-fill"></i></span> Mail<b>ora</b>
+            </a>
+
+            <div class="err-code" aria-label="404">
+                <span class="d">4</span>
+                <span class="env"><i class="bi bi-envelope-paper-heart"></i></span>
+                <span class="d">4</span>
+            </div>
+
+            <h1>Bu mektup yolda kayboldu</h1>
+            <p>Aradığın sayfa taşınmış, silinmiş ya da hiç var olmamış olabilir.</p>
+
+            <div class="err-actions">
+                <a href="/Message/Inbox" class="btn-x primary"><i class="bi bi-inbox"></i> Gelen Kutusuna Dön</a>
+                <a href="javascript:history.back()" class="btn-x ghost"><i class="bi bi-arrow-left"></i> Geri Dön</a>
+            </div>
+
+            <div class="quick">
+                <a href="/Message/Inbox"><i class="bi bi-inbox"></i>Gelen Kutusu</a>
+                <a href="/Message/SendBox"><i class="bi bi-send"></i>Gönderilenler</a>
+                <a href="/Message/CreateMessage"><i class="bi bi-pencil-square"></i>Yeni Mesaj</a>
+            </div>
+
+            <div class="err-foot">© 2026 Mailora</div>
+        </div>
+    </main>
+</body>
+</html>

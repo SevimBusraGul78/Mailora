@@ -1,0 +1,113 @@
+﻿@model List<MYAcademy_IdentitiyEmailProject.Entities.Message>
+@using System.Globalization
+@using System.Net
+@using System.Text.RegularExpressions
+@{
+    ViewData["Title"] = "Taslaklar";
+    ViewData["ActiveMenu"] = "drafts";
+    Layout = "~/Views/MessageLayout/Index.cshtml";
+
+    var messages = Model ?? new List<MYAcademy_IdentitiyEmailProject.Entities.Message>();
+    var tr = new CultureInfo("tr-TR");
+}
+@functions {
+    static string Snippet(string? html, int max = 120)
+    {
+        if (string.IsNullOrWhiteSpace(html)) return "";
+        var text = WebUtility.HtmlDecode(Regex.Replace(html, "<[^>]+>", " "));
+        text = Regex.Replace(text, @"\s+", " ").Trim();
+        return text.Length > max ? text[..max].TrimEnd() + "…" : text;
+    }
+}
+
+<style>
+    .dr-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 32px;
+        padding: 0 11px;
+        border-radius: 9px;
+        border: 1px solid #ECEBF5;
+        background: #fff;
+        color: #5D6075;
+        font-size: 12.5px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
+    }
+
+        .dr-btn:hover {
+            border-color: #E9A3B9;
+            color: #C2476B;
+        }
+
+    .dr-empty-field {
+        color: #B3B5C3;
+        font-style: italic;
+    }
+
+    .dr-tag {
+        display: inline-block;
+        margin-right: 6px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: #FDEEE6;
+        color: #C9774A;
+        font-size: 11px;
+        font-weight: 700;
+    }
+</style>
+
+<section class="inbox">
+    <div class="panel list-panel">
+        <div class="list-head">
+            <div class="list-title">
+                <div>
+                    <h1>Taslaklar</h1>
+                    <div class="sub">@messages.Count taslak</div>
+                </div>
+                <a class="count-pill" asp-action="CreateMessage"><i class="bi bi-pencil-square"></i> Yeni Mesaj</a>
+            </div>
+        </div>
+
+        <div class="msg-list">
+            @foreach (var m in messages)
+            {
+                <article class="msg-item" tabindex="0" style="cursor:pointer" onclick="location.href='/Message/CreateMessage?draftId=@m.MessageId'">
+                    <div class="lead"></div>
+                    <span class="avatar av-peach"><i class="bi bi-file-earmark-text"></i></span>
+                    <div class="mi-sender">
+                        @if (string.IsNullOrEmpty(m.ReceiverEmail))
+                        {
+                            <span class="sender dr-empty-field">(alıcı yok)</span>
+                        }
+                        else
+                        {
+                            <span class="sender">Kime: @m.ReceiverEmail</span>
+                        }
+                    </div>
+                    <div class="mi-main">
+                        <span class="subject"><span class="dr-tag">Taslak</span>@(string.IsNullOrEmpty(m.Subject) ? "(konu yok)" : m.Subject)</span>
+                        <span class="snippet">@Snippet(m.MessageDetail)</span>
+                    </div>
+                    <div class="mi-meta" onclick="event.stopPropagation()">
+                        <form asp-action="DeleteDraft" asp-route-id="@m.MessageId" method="post" onsubmit="return confirm('Bu taslak silinecek. Emin misin?');">
+                            <button type="submit" class="dr-btn" title="Taslağı sil"><i class="bi bi-trash3"></i> Sil</button>
+                        </form>
+                    </div>
+                    <span class="time" title="Son düzenleme: @m.SendDate.ToString("d MMMM yyyy HH:mm", tr)">@m.SendDate.ToString("d MMM HH:mm", tr)</span>
+                </article>
+            }
+
+            @if (!messages.Any())
+            {
+                <div class="empty-list">
+                    <div class="ic"><i class="bi bi-file-earmark-text"></i></div>
+                    <h6>Taslağın yok</h6>
+                    <div>Yeni Mesaj sayfasında "Taslak Kaydet"e basarak yarım mesajlarını saklayabilirsin.</div>
+                </div>
+            }
+        </div>
+    </div>
+</section>

@@ -1,0 +1,65 @@
+﻿@model List<MYAcademy_IdentitiyEmailProject.Entities.Message>
+@using System.Globalization
+@using System.Net
+@using System.Text.RegularExpressions
+@{
+    ViewData["Title"] = "Gönderilenler";
+    ViewData["ActiveMenu"] = "sent";
+    Layout = "~/Views/MessageLayout/Index.cshtml";
+
+    var messages = Model ?? new List<MYAcademy_IdentitiyEmailProject.Entities.Message>();
+    var tr = new CultureInfo("tr-TR");
+}
+@functions {
+    // HTML içerikten tek satırlık düz metin özet
+    static string Snippet(string? html, int max = 140)
+    {
+        if (string.IsNullOrWhiteSpace(html)) return "";
+        var text = WebUtility.HtmlDecode(Regex.Replace(html, "<[^>]+>", " "));
+        text = Regex.Replace(text, @"\s+", " ").Trim();
+        return text.Length > max ? text[..max].TrimEnd() + "…" : text;
+    }
+}
+
+<section class="inbox">
+    <div class="panel list-panel">
+
+        <div class="list-head">
+            <div class="list-title">
+                <div>
+                    <h1>Gönderilenler</h1>
+                    <div class="sub">@messages.Count mesaj</div>
+                </div>
+                <a class="count-pill" asp-action="CreateMessage"><i class="bi bi-pencil-square"></i> Yeni Mesaj</a>
+            </div>
+        </div>
+
+        <div class="msg-list">
+            @foreach (var m in messages)
+            {
+                <article class="msg-item" tabindex="0" style="cursor:pointer" onclick="location.href='/Message/Detail/@m.MessageId'">
+                    <div class="lead"></div>
+                    <span class="avatar av-lav">@(string.IsNullOrEmpty(m.ReceiverEmail) ? "?" : m.ReceiverEmail.Substring(0, 1).ToUpper(tr))</span>
+                    <div class="mi-sender">
+                        <span class="sender">Kime: @m.ReceiverEmail</span>
+                    </div>
+                    <div class="mi-main">
+                        <span class="subject">@m.Subject</span>
+                        <span class="snippet">@Snippet(m.MessageDetail)</span>
+                    </div>
+                    <span class="time" title="@m.SendDate.ToString("d MMMM yyyy, dddd HH:mm", tr)">@m.SendDate.ToString("d MMM HH:mm", tr)</span>
+                </article>
+            }
+
+            @if (!messages.Any())
+            {
+                <div class="empty-list">
+                    <div class="ic"><i class="bi bi-send"></i></div>
+                    <h6>Henüz mesaj göndermedin</h6>
+                    <div>Gönderdiğin mesajlar burada listelenecek.</div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+

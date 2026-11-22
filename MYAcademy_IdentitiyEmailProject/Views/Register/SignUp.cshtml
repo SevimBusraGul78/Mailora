@@ -1,0 +1,219 @@
+@model UserRegisterViewModel
+@{
+    Layout = null;
+
+    var hasError = !ViewData.ModelState.IsValid;
+    ViewData["MailoSay"] = hasError
+        ? "Bir şeyler ters gitti 😕 Bilgileri kontrol eder misin?"
+        : "Aramıza hoş geldin! ✨ Hadi hesabını birlikte oluşturalım.";
+}
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <title>Kayıt Ol · Mailora</title>
+    <partial name="_MailoStyle" />
+</head>
+<body>
+    <div class="m-bg" aria-hidden="true"><span class="b1"></span><span class="b2"></span><span class="b3"></span></div>
+
+    <main class="m-page">
+        <div class="m-card">
+
+            <partial name="_MailoStage" />
+
+            <section class="m-form">
+                <div class="m-head">
+                    <span class="pill"><i class="bi bi-stars"></i> Ücretsiz hesap</span>
+                    <h1>Mailora'ya <span class="grad">katıl</span></h1>
+                    <p>Bir dakikada hesabını oluştur, e-postalarını tek yerden yönetmeye başla.</p>
+                </div>
+
+                <form method="post" id="registerForm" autocomplete="on">
+                    <div asp-validation-summary="All" class="form-alert"></div>
+
+                    <div class="stack">
+                        <div class="grid2">
+                            <div class="field">
+                                <label for="Name">Ad</label>
+                                <div class="iw">
+                                    <i class="bi bi-person lead"></i>
+                                    <input class="inp" asp-for="Name" type="text" placeholder="Adın" autocomplete="given-name" maxlength="50" required />
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label for="Surname">Soyad</label>
+                                <div class="iw">
+                                    <i class="bi bi-person lead"></i>
+                                    <input class="inp" asp-for="Surname" type="text" placeholder="Soyadın" autocomplete="family-name" maxlength="50" required />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label for="UserName">Kullanıcı Adı</label>
+                            <div class="iw">
+                                <i class="bi bi-at lead"></i>
+                                <input class="inp" asp-for="UserName" type="text" placeholder="ornek: ahmetyilmaz" autocomplete="username"
+                                       maxlength="30" spellcheck="false" autocapitalize="none" required />
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label for="Email">E-posta</label>
+                            <div class="iw">
+                                <i class="bi bi-envelope lead"></i>
+                                <input class="inp" asp-for="Email" type="email" placeholder="ad.soyad@ornek.com" autocomplete="email"
+                                       spellcheck="false" autocapitalize="none" required />
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label for="Password">Şifre</label>
+                            <div class="iw">
+                                <i class="bi bi-lock lead"></i>
+                                <input class="inp" asp-for="Password" type="password" placeholder="Güçlü bir şifre belirle" autocomplete="new-password" required />
+                                <button type="button" class="eye-btn" data-eye="Password" aria-label="Şifreyi göster"><i class="bi bi-eye"></i></button>
+                            </div>
+                            <div class="meter" id="meter" data-l="0"><span></span><span></span><span></span><span></span></div>
+                            <div class="meter-txt"><span>Şifre gücü</span><span id="meterTxt">—</span></div>
+                            <div class="rules" id="rules">
+                                <span data-r="len">6+ karakter</span>
+                                <span data-r="up">Büyük harf</span>
+                                <span data-r="low">Küçük harf</span>
+                                <span data-r="num">Rakam</span>
+                                <span data-r="sym">Sembol</span>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label for="PasswordConfirm">Şifre Tekrar</label>
+                            <div class="iw">
+                                <i class="bi bi-shield-lock lead"></i>
+                                <input class="inp" asp-for="PasswordConfirm" type="password" placeholder="Şifreni tekrar gir" autocomplete="new-password" required />
+                                <button type="button" class="eye-btn" data-eye="PasswordConfirm" aria-label="Şifreyi göster"><i class="bi bi-eye"></i></button>
+                            </div>
+                            <div class="match" id="match"></div>
+                        </div>
+
+                        <label class="check">
+                            <input type="checkbox" id="terms" />
+                            <span>KVKK ve kullanıcı sözleşmesini okudum, kabul ediyorum.</span>
+                        </label>
+                    </div>
+
+                    <div class="client-err" id="clientErr"></div>
+
+                    <button type="submit" class="btn-main" id="registerBtn">
+                        <span class="lbl">Hesap Oluştur</span>
+                        <i class="bi bi-arrow-right ic"></i>
+                        <span class="spin"></span>
+                    </button>
+
+                    <div class="m-foot">
+                        Zaten hesabın var mı? <a asp-controller="Login" asp-action="SignIn">Giriş yap</a>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        var M = window.Mailo;
+        var pw = document.getElementById('Password');
+        var pw2 = document.getElementById('PasswordConfirm');
+        var form = document.getElementById('registerForm');
+        var clientErr = document.getElementById('clientErr');
+
+        // Mailo yazılanlara bakar, şifrelerde gözlerini kapatır
+        M.watch(document.getElementById('Name'), 'Memnun oldum! Adın ne? 😊');
+        M.watch(document.getElementById('Surname'), 'Soyadın da lazım 📝');
+        M.watch(document.getElementById('UserName'), 'Havalı bir kullanıcı adı seç 😎');
+        M.watch(document.getElementById('Email'), 'Doğrulama kodunu bu adrese yollayacağım 📬');
+        M.hide(pw, 'Güçlü bir şifre seç, ben bakmıyorum 🙈');
+        M.hide(pw2, 'Bir kez daha... hâlâ bakmıyorum 🙈');
+
+        // Şifreyi göster / gizle
+        document.querySelectorAll('[data-eye]').forEach(function (btn) {
+            btn.addEventListener('mousedown', function (e) { e.preventDefault(); });
+            btn.addEventListener('click', function () {
+                var input = document.getElementById(btn.dataset.eye);
+                var show = input.type === 'password';
+                input.type = show ? 'text' : 'password';
+                btn.innerHTML = show ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>';
+                if (document.activeElement === input) {
+                    M.cover(true, show);
+                    M.say(show ? 'Parmaklarımın arasından azıcık... 👀' : 'Tamam tamam, kapattım! 🙈');
+                }
+            });
+        });
+
+        // Şifre gücü (Identity'nin kurallarıyla aynı)
+        var meter = document.getElementById('meter');
+        var meterTxt = document.getElementById('meterTxt');
+        var labels = ['—', 'Zayıf', 'Orta', 'İyi', 'Çok güçlü'];
+        function checkRules(v) {
+            return {
+                len: v.length >= 6,
+                up: /[A-ZÇĞİÖŞÜ]/.test(v),
+                low: /[a-zçğıöşü]/.test(v),
+                num: /\d/.test(v),
+                sym: /[^A-Za-z0-9ÇĞİÖŞÜçğıöşü]/.test(v)
+            };
+        }
+        function allOk(r) { return r.len && r.up && r.low && r.num && r.sym; }
+
+        pw.addEventListener('input', function () {
+            var r = checkRules(pw.value);
+            document.querySelectorAll('#rules span').forEach(function (s) { s.classList.toggle('ok', r[s.dataset.r]); });
+            var score = [r.len, r.up, r.low, r.num, r.sym].filter(Boolean).length;
+            var level = pw.value ? Math.max(1, Math.min(4, score - 1)) : 0;
+            meter.dataset.l = level;
+            meterTxt.textContent = labels[level];
+            if (allOk(r)) M.say('Bu şifre çok sağlam! 💪');
+            updateMatch();
+        });
+
+        // Şifreler eşleşiyor mu?
+        var match = document.getElementById('match');
+        function updateMatch() {
+            if (!pw2.value) { match.className = 'match'; return; }
+            var same = pw.value === pw2.value;
+            match.className = 'match ' + (same ? 'ok' : 'no');
+            match.textContent = same ? '✓ Şifreler eşleşiyor' : 'Şifreler eşleşmiyor';
+        }
+        pw2.addEventListener('input', updateMatch);
+
+        // Sözleşme onaylanınca Mailo sevinir
+        var terms = document.getElementById('terms');
+        terms.addEventListener('change', function () {
+            if (terms.checked) { M.mood('happy'); M.say('Harika! Her şey hazır 🎉'); M.jump(); }
+            else { M.mood('smile'); }
+        });
+
+        // Göndermeden önce kontrol
+        function showErr(text) {
+            clientErr.textContent = text;
+            clientErr.classList.add('show');
+            M.mood('sad'); M.say(text); M.shake();
+        }
+
+        form.addEventListener('submit', function (e) {
+            clientErr.classList.remove('show');
+            if (!allOk(checkRules(pw.value))) { e.preventDefault(); showErr('Şifren tüm kuralları karşılamalı 🔐'); return; }
+            if (pw.value !== pw2.value) { e.preventDefault(); showErr('Şifreler birbirini tutmuyor 🤔'); return; }
+            if (!terms.checked) { e.preventDefault(); showErr('Önce sözleşmeyi onaylaman lazım 📝'); return; }
+
+            var b = document.getElementById('registerBtn');
+            b.classList.add('is-loading');
+            b.querySelector('.lbl').textContent = 'Hesap oluşturuluyor';
+            M.cover(false); M.mood('happy'); M.say('Hesabını hazırlıyorum... ✉️'); M.jump();
+        });
+
+        @if (hasError)
+        {
+            <text>M.mood('sad'); M.shake();</text>
+        }
+    </script>
+</body>
+</html>

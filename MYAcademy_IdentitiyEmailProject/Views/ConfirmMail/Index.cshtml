@@ -1,0 +1,212 @@
+@model ConfirmMailViewModel
+@{
+    Layout = null;
+
+    // E-postanın bir kısmını gizleyerek göster: se••••78@gmail.com
+    var email = Model?.Email ?? "";
+    var hasEmail = !string.IsNullOrWhiteSpace(email);
+    var masked = email;
+    var at = email.IndexOf("@");
+    if (at > 2)
+    {
+        masked = email.Substring(0, 2) + new string('•', Math.Min(at - 2, 6)) + email.Substring(at);
+    }
+
+    var hasError = !ViewData.ModelState.IsValid;
+    ViewData["MailoSay"] = hasError
+        ? "Bu kod tutmadı 😕 Mailini bir daha kontrol eder misin?"
+        : "Sana 6 haneli bir kod yolladım 📬 Hadi onu bulalım!";
+}
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <title>E-posta Doğrulama · Mailora</title>
+    <partial name="_MailoStyle" />
+</head>
+<body>
+    <div class="m-bg" aria-hidden="true"><span class="b1"></span><span class="b2"></span><span class="b3"></span></div>
+
+    <main class="m-page">
+        <div class="m-card">
+
+            <partial name="_MailoStage" />
+
+            <section class="m-form">
+                <div class="m-head">
+                    <span class="pill"><i class="bi bi-shield-check"></i> Son bir adım</span>
+                    <h1>E-postanı <span class="grad">doğrula</span></h1>
+                    <p>Hesabını etkinleştirmek için sana gönderdiğimiz 6 haneli kodu gir.</p>
+                </div>
+
+                @if (hasEmail)
+                {
+                    <div class="sent-to">
+                        <i class="bi bi-at"></i> @masked
+                        <button type="button" id="editEmail">Değiştir</button>
+                    </div>
+                }
+
+                <form method="post" id="verifyForm" novalidate>
+                    <div asp-validation-summary="All" class="form-alert"></div>
+
+                    <!-- E-posta: adresten geldiyse gizli durur, "Değiştir" ile açılır -->
+                    <div class="field" id="emailField" style="margin-bottom:18px;@(hasEmail ? "display:none" : "")">
+                        <label for="Email">E-posta</label>
+                        <div class="iw">
+                            <i class="bi bi-envelope lead"></i>
+                            <input class="inp" asp-for="Email" type="email" placeholder="ad.soyad@ornek.com" autocomplete="email" />
+                        </div>
+                    </div>
+
+                    <span class="otp-label">Doğrulama Kodu</span>
+                    <div class="otp" id="otp">
+                        <input type="text" inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="1. hane" />
+                        <input type="text" inputmode="numeric" maxlength="1" aria-label="2. hane" />
+                        <input type="text" inputmode="numeric" maxlength="1" aria-label="3. hane" />
+                        <input type="text" inputmode="numeric" maxlength="1" aria-label="4. hane" />
+                        <input type="text" inputmode="numeric" maxlength="1" aria-label="5. hane" />
+                        <input type="text" inputmode="numeric" maxlength="1" aria-label="6. hane" />
+                    </div>
+                    <div class="otp-progress"><span id="otpBar"></span></div>
+                    <div class="client-err" id="otpErr">6 haneli kodun tamamını gir.</div>
+
+                    <!-- Kutulardaki rakamlar birleşip buraya yazılıyor, controller'a bu gidiyor -->
+                    <input type="hidden" asp-for="ConfirmCode" />
+
+                    <button type="submit" class="btn-main" id="verifyBtn">
+                        <span class="lbl">Hesabı Doğrula</span>
+                        <i class="bi bi-check2-circle ic"></i>
+                        <span class="spin"></span>
+                    </button>
+
+                    <div class="tips">
+                        <div class="tip"><i class="bi bi-lightbulb"></i><span>Kodu kopyalayıp ilk kutuya yapıştırırsan 6 kutu birden dolar.</span></div>
+                        <div class="tip"><i class="bi bi-inbox"></i><span>Mail gelmediyse <b>Spam</b>, <b>Promosyonlar</b> ya da <b>Gönderilenler</b> klasörüne bak. <a href="https://mail.google.com" target="_blank" rel="noopener">Gmail'i aç</a></span></div>
+                    </div>
+
+                    <div class="m-foot">
+                        Yanlış hesap mı? <a asp-controller="Login" asp-action="SignIn">Giriş sayfasına dön</a>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        (function () {
+            var M = window.Mailo;
+            var otp = document.getElementById('otp');
+            var boxes = Array.prototype.slice.call(otp.querySelectorAll('input'));
+            var hidden = document.getElementById('ConfirmCode');
+            var form = document.getElementById('verifyForm');
+            var bar = document.getElementById('otpBar');
+            var err = document.getElementById('otpErr');
+            var btn = document.getElementById('verifyBtn');
+            var sentences = ['Güzel başlangıç!', 'Devam devam...', 'Yarısı tamam ✌️', 'Az kaldı!', 'Son bir hane! 🤞'];
+
+            hidden.value = '';
+
+            // Kutulardaki rakamları birleştirip gizli alana yaz
+            function sync() {
+                var code = boxes.map(function (b) { return b.value; }).join('');
+                hidden.value = code;
+                bar.style.width = (code.length / 6 * 100) + '%';
+                boxes.forEach(function (b) { b.classList.toggle('filled', b.value !== ''); });
+                otp.classList.remove('has-error');
+                err.classList.remove('show');
+                if (code.length > 0 && code.length < 6) { M.say(sentences[code.length - 1]); M.mood('smile'); }
+                return code;
+            }
+
+            function shake() {
+                otp.classList.add('has-error', 'shake');
+                setTimeout(function () { otp.classList.remove('shake'); }, 500);
+                M.mood('sad'); M.shake();
+            }
+
+            // 6 hane dolunca otomatik gönder
+            function autoSubmit() {
+                otp.classList.add('done');
+                btn.classList.add('is-loading');
+                btn.querySelector('.lbl').textContent = 'Doğrulanıyor';
+                M.mood('happy'); M.say('Harika! Kontrol ediyorum... 🔍'); M.jump();
+                setTimeout(function () { form.submit(); }, 600);
+            }
+
+            // Birden fazla rakam geldiğinde (yapıştırma) kutulara dağıt
+            function fill(digits, start) {
+                digits.split('').slice(0, 6 - start).forEach(function (d, k) { boxes[start + k].value = d; });
+                var code = sync();
+                boxes[Math.min(start + digits.length, 5)].focus();
+                if (code.length === 6) autoSubmit();
+            }
+
+            boxes.forEach(function (box, i) {
+                box.addEventListener('focus', function () {
+                    box.select();
+                    M.follow(false);
+                    M.look(-0.3 + i * 0.25, 0.8);   // Mailo hangi kutudaysan oraya bakar
+                });
+                box.addEventListener('blur', function () { M.follow(true); });
+
+                box.addEventListener('input', function () {
+                    var v = box.value.replace(/\D/g, '');
+                    if (v.length > 1) { fill(v, i); return; }
+                    box.value = v;
+                    var code = sync();
+                    if (v && i < 5) boxes[i + 1].focus();
+                    if (code.length === 6) autoSubmit();
+                });
+
+                box.addEventListener('keydown', function (e) {
+                    if (e.key === 'Backspace' && !box.value && i > 0) {
+                        e.preventDefault();
+                        boxes[i - 1].value = '';
+                        boxes[i - 1].focus();
+                        sync();
+                    }
+                    if (e.key === 'ArrowLeft' && i > 0) boxes[i - 1].focus();
+                    if (e.key === 'ArrowRight' && i < 5) boxes[i + 1].focus();
+                });
+
+                box.addEventListener('paste', function (e) {
+                    e.preventDefault();
+                    var text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+                    if (text) { M.mood('wow'); fill(text, i); }
+                });
+            });
+
+            form.addEventListener('submit', function (e) {
+                if (sync().length !== 6) {
+                    e.preventDefault();
+                    err.classList.add('show');
+                    M.say('Kod 6 haneli olmalı 🙂');
+                    shake();
+                    return;
+                }
+                btn.classList.add('is-loading');
+                btn.querySelector('.lbl').textContent = 'Doğrulanıyor';
+            });
+
+            // "Değiştir" butonu e-posta alanını açar
+            var edit = document.getElementById('editEmail');
+            if (edit) {
+                edit.addEventListener('click', function () {
+                    document.getElementById('emailField').style.display = '';
+                    document.getElementById('Email').focus();
+                    edit.parentElement.style.display = 'none';
+                });
+            }
+
+            // Sunucudan "kod hatalı" döndüyse
+            @if (hasError)
+            {
+                <text>shake();</text>
+            }
+
+            boxes[0].focus();
+        })();
+    </script>
+</body>
+</html>

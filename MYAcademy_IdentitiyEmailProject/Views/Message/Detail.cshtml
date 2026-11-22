@@ -1,0 +1,73 @@
+@model MYAcademy_IdentitiyEmailProject.Entities.Message
+@using System.Globalization
+@using Ganss.Xss
+@{
+    ViewData["Title"] = Model.Subject;
+    var isReceiver = ViewBag.IsReceiver as bool? ?? false;
+    ViewData["ActiveMenu"] = isReceiver ? "inbox" : "sent";
+    Layout = "~/Views/MessageLayout/Index.cshtml";
+
+    var tr = new CultureInfo("tr-TR");
+    var person = isReceiver ? Model.SenderEmail : Model.ReceiverEmail;
+    var initial = string.IsNullOrEmpty(person) ? "?" : person.Substring(0, 1).ToUpper(tr);
+
+    // Eski mesajlar kaydedilirken temizlenmemiş olabilir: gösterirken de temizliyoruz
+    var safeHtml = new HtmlSanitizer().Sanitize(Model.MessageDetail ?? "");
+}
+
+<style>
+    .md-wrap { max-width: 900px; margin: 0 auto; }
+    .md-card { background: #fff; border-radius: 22px; box-shadow: 0 4px 24px rgba(91, 80, 170, .08); overflow: hidden; }
+    .md-top { display: flex; align-items: center; gap: 10px; padding: 16px 22px; border-bottom: 1px solid #ECEBF5; }
+    .md-btn { display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 14px; border-radius: 11px; border: 1px solid #ECEBF5; background: #fff; color: #5D6075; font-weight: 600; font-size: 13.5px; text-decoration: none; transition: border-color .2s, color .2s; }
+    .md-btn:hover { border-color: #8B7FD6; color: #7467C7; }
+    .md-head { padding: 26px 30px 18px; }
+    .md-subject { font-size: 24px; font-weight: 800; letter-spacing: -.4px; margin: 0 0 16px; line-height: 1.3; }
+    .md-cat { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px; background: #EAE6FA; color: #7467C7; font-size: 12px; font-weight: 700; margin-bottom: 14px; }
+    .md-who { display: flex; align-items: center; gap: 14px; }
+    .md-av { width: 46px; height: 46px; border-radius: 50%; flex: 0 0 46px; display: grid; place-items: center; background: #EAE6FA; color: #7467C7; font-weight: 800; font-size: 18px; }
+    .md-who b { display: block; font-size: 15px; }
+    .md-who span { color: #85899B; font-size: 13px; }
+    .md-date { margin-left: auto; color: #85899B; font-size: 13px; text-align: right; }
+    .md-body { padding: 8px 30px 34px; font-size: 15px; line-height: 1.75; color: #2B2D42; overflow-wrap: anywhere; }
+    .md-body a { color: #7467C7; }
+    @@media (max-width: 600px) {
+        .md-head, .md-body { padding-left: 18px; padding-right: 18px; }
+        .md-who { flex-wrap: wrap; }
+        .md-date { margin-left: 60px; text-align: left; }
+    }
+</style>
+
+<div class="md-wrap">
+    <div class="md-card">
+        <div class="md-top">
+            <a class="md-btn" href="@(isReceiver ? "/Message/Inbox" : "/Message/SendBox")"><i class="bi bi-arrow-left"></i> Geri</a>
+            <span style="margin-left:auto"></span>
+            <a class="md-btn" href="/Message/CreateMessage?replyTo=@Model.MessageId"><i class="bi bi-reply"></i> Yanıtla</a>
+            <a class="md-btn" href="/Message/CreateMessage?forwardOf=@Model.MessageId"><i class="bi bi-forward"></i> İlet</a>
+        </div>
+
+        <div class="md-head">
+            @if (Model.Category != null)
+            {
+                <span class="md-cat"><i class="bi bi-tag-fill"></i> @Model.Category.CategoryName</span>
+            }
+            <h1 class="md-subject">@Model.Subject</h1>
+
+            <div class="md-who">
+                <span class="md-av">@initial</span>
+                <div>
+                    <b>@(isReceiver ? "Kimden" : "Kime"): @person</b>
+                    <span>@(isReceiver ? "Kime: " + Model.ReceiverEmail : "Kimden: " + Model.SenderEmail)</span>
+                </div>
+                <div class="md-date" title="@Model.SendDate.ToString("d MMMM yyyy, dddd HH:mm", tr)">
+                    @Model.SendDate.ToString("d MMMM yyyy", tr)<br />@Model.SendDate.ToString("HH:mm", tr)
+                </div>
+            </div>
+        </div>
+
+        <div class="md-body">
+            @Html.Raw(safeHtml)
+        </div>
+    </div>
+</div>

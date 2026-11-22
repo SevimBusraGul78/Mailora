@@ -1,0 +1,36 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <title>403 · Mailora</title>
+    <partial name="_ErrorStyle" />
+</head>
+<body>
+    <div class="err-bg" aria-hidden="true">
+        <span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span>
+    </div>
+
+    <main class="err-page">
+        <div class="err-card">
+            <a class="err-brand" href="/Message/Inbox">
+                <span class="logo"><i class="bi bi-envelope-paper-heart-fill"></i></span> Mail<b>ora</b>
+            </a>
+
+            <div class="err-icon rose"><i class="bi bi-shield-lock"></i></div>
+            <div class="err-code"><span class="d">403</span></div>
+
+            <h1>Erişim engellendi</h1>
+            <p>Bu sayfayı görüntüleme yetkin bulunmuyor. Bir hata olduğunu düşünüyorsan yöneticiye başvur.</p>
+
+            <div class="err-actions">
+                <a href="/Message/Inbox" class="btn-x primary"><i class="bi bi-inbox"></i> Gelen Kutusuna Dön</a>
+                <a href="javascript:history.back()" class="btn-x ghost"><i class="bi bi-arrow-left"></i> Geri Dön</a>
+            </div>
+
+            <div class="err-foot">© 2026 Mailora</div>
+        </div>
+    </main>
+</body>
+</html>
