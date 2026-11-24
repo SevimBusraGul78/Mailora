@@ -104,7 +104,16 @@ Zengin metin editörüyle (kalın, italik, liste, bağlantı vb.) biçimlendiril
 
 ![Yeni mesaj](docs/images/07-yeni-mesaj.png)
 
-### 8. Çöp Kutusu
+### 8. Gönderilenler
+Kullanıcının gönderdiği tüm mesajlar, alıcı bilgisi ve gönderim tarihiyle birlikte en yeniden en eskiye listelenir.
+
+- **Kullanıcıya özel:** Her kullanıcı yalnızca kendi gönderdiği mesajları görür.
+- **Anında yansıma:** Kayıtlı bir kullanıcıya gönderilen mesaj, aynı anda alıcının Gelen Kutusuna da düşer.
+- **Taslaklar ayrı tutulur:** Henüz gönderilmemiş mesajlar bu listede görünmez, "Taslaklar" sayfasında bekler.
+
+![Gönderilenler](docs/images/11-gonderilenler.png)
+
+### 9. Çöp Kutusu
 Silinen mesajlar veritabanından hemen silinmez, önce çöp kutusuna taşınır (soft delete).
 
 - **Geri Al:** Silme işleminden sonraki 5 saniye içinde "Geri Al" butonuyla işlem iptal edilebilir.
@@ -113,7 +122,7 @@ Silinen mesajlar veritabanından hemen silinmez, önce çöp kutusuna taşınır
 
 ![Çöp kutusu](docs/images/08-cop-kutusu.png)
 
-### 9. Profil
+### 10. Profil
 Kullanıcı ad, soyad ve "Hakkımda" bilgilerini düzenleyip profil fotoğrafı yükleyebilir.
 
 - **Güvenli fotoğraf yükleme:** Dosyanın boyutu, uzantısı ve gerçekten bir resim olup olmadığı kontrol edilir.
@@ -121,7 +130,7 @@ Kullanıcı ad, soyad ve "Hakkımda" bilgilerini düzenleyip profil fotoğrafı 
 
 ![Profil](docs/images/09-profil.png)
 
-### 10. Hata Sayfaları
+### 11. Hata Sayfaları
 Uygulamanın tasarımıyla uyumlu, özel **401**, **403** ve **404** hata sayfaları hazırlandı.
 
 - **Yönlendirme kısayolları:** Kullanıcı tek tıkla gelen kutusuna, gönderilenlere veya yeni mesaj sayfasına dönebilir.
